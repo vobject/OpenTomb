@@ -15,8 +15,7 @@ public:
      CPathFinder();
     ~CPathFinder();
 
-    void InitialiseSearch(room_sector_s* start, room_sector_s* target);///@TODO startSearch? rename?
-    void ProcessNode(CPathNode* node);
+    void InitialiseSearch(room_sector_s* start, room_sector_s* target);
     CPathNode* GetNextOpenNode();
 
 private:

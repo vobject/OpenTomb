@@ -25,7 +25,7 @@ void AI_UpdateEntity(entity_p entity)
     }
 
     //We can only continue if entity and targetEntity are valid entities.
-    if((entity != NULL) && targetEntity != NULL) //&& (entity != World_GetPlayer()))///@TODO and activated
+    if((entity != NULL) && targetEntity != NULL && (entity->state_flags & ENTITY_STATE_ACTIVE))
     {
         ///@HACK Critical! AI loop should only be called when World is fully prepared!
         if(entity->bf == NULL) return;
@@ -45,7 +45,6 @@ void AI_UpdateEntity(entity_p entity)
             CPathFinder* pathFinder = NULL;
             pathFinder = new CPathFinder();
             pathFinder->InitialiseSearch(entity->current_sector, targetEntity->current_sector);
-            ///@TODO Pass path sector node to AI_Update* That is where we will move the entity
             AI_UpdateWolf(entity, pathFinder);
             delete pathFinder;
         }
@@ -55,7 +54,6 @@ void AI_UpdateEntity(entity_p entity)
             CPathFinder* pathFinder = NULL;
             pathFinder = new CPathFinder();
             pathFinder->InitialiseSearch(entity->current_sector, targetEntity->current_sector);
-            ///@TODO Pass path sector node to AI_Update* That is where we will move the entity
             AI_UpdateBear(entity, pathFinder);
             delete pathFinder;
         }
@@ -72,7 +70,14 @@ void AI_UpdateWolf(entity_p entity, CPathFinder* path)
 {
     if(entity != NULL)
     {
-
+        switch(entity->bf->animations.next_state)
+        {
+        case 8:
+            entity->bf->animations.current_animation = 6;
+            entity->bf->animations.last_state = 5;
+            break;
+        }
+        Con_Printf("Entity NState: %i, LState: %i", entity->bf->animations.next_state, entity->bf->animations.last_state);
     }
 }
 

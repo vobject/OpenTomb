@@ -5,8 +5,7 @@
 
 
 ///TEMPORARY
-#define PATH_ENTITY_TO_LARA     (1) ///Path print order reversed (ent->lara)
-#define PATH_DISABLE_DIAGONAL   (1) ///Should we allow traversal across diagonal sectors?
+#define PATH_DISABLE_DIAGONAL   (1)
 #define PATH_STABILITY_DEBUG    (0)
 #define PATH_LOG_DETAILED_INFO  (0)
 
@@ -74,8 +73,6 @@ void CPathFinder::InitialiseSearch(room_sector_s* start, room_sector_s* target)
         }
     }
 
-    Sys_DebugLog(SYS_LOG_PATHFINDER, "PathFinder Node Count: %i\n", this->m_nodes.size());
-
     //Get our start node and target node
     start_node = &this->m_nodes[start->index_x + (start->owner_room->sectors_x * start->index_y)];
     target_node = &this->m_nodes[target->index_x + (target->owner_room->sectors_x * target->index_y)];
@@ -90,18 +87,12 @@ void CPathFinder::InitialiseSearch(room_sector_s* start, room_sector_s* target)
     //Start node's parent must be NULL so we can saftely traverse back later
     start_node->SetParentNode(NULL);
 
-    uint32_t counter = 0;
-
     while((this->m_openList.size() > 0))
     {
-
-        counter++;
-
         //Get the next node with lowest cost
         current_node = this->GetNextOpenNode();
 
 #if PATH_LOG_DETAILED_INFO
-        Sys_DebugLog(SYS_LOG_PATHFINDER, "PathFinder iterater: %i\n", counter);
         Sys_DebugLog(SYS_LOG_PATHFINDER, "PathFinder is at X: %i, Y: %i\n", current_node->GetSector()->index_x, current_node->GetSector()->index_y);
         Sys_DebugLog(SYS_LOG_PATHFINDER, "Target is at X: %i, Y: %i\n", target_node->GetSector()->index_x, target_node->GetSector()->index_y);
 #endif // PATH_LOG_DETAILED_INFO
@@ -117,7 +108,7 @@ void CPathFinder::InitialiseSearch(room_sector_s* start, room_sector_s* target)
                     return;
                 }
 
-                Sys_DebugLog(SYS_LOG_PATHFINDER, "[PATH_IS_FOUND] - Calls: %i\n", counter);
+                //We're ready to generate the final path
                 this->GeneratePath(current_node);
 
                 break;
@@ -172,11 +163,11 @@ void CPathFinder::InitialiseSearch(room_sector_s* start, room_sector_s* target)
                         continue;
                     }
 
-                    ///@UNIMPLEMENTED
-                    /*if(!this->IsValidNeighbour(current_node, neighbour_node))
+                    //We need to check if this is a valid sector the entity is able to walk upon
+                    if(!this->IsValidNeighbour(current_node, neighbour_node))
                     {
                         continue;
-                    }*/
+                    }
 
                     ///We want to set different costs for vertical&horziontal, diagonal moves.
                     if(neighbour_node->GetSector()->index_x != current_node->GetSector()->index_x && neighbour_node->GetSector()->index_y != current_node->GetSector()->index_y)
@@ -229,7 +220,6 @@ void CPathFinder::InitialiseSearch(room_sector_s* start, room_sector_s* target)
  */
 
  ///@OPTIMISE - Order by F-Cost.
-
 CPathNode* CPathFinder::GetNextOpenNode()
 {
     int32_t current_cost, current_index;
@@ -417,41 +407,25 @@ int CPathFinder::CalculateHeuristic(CPathNode* start, CPathNode* target)
 
 void CPathFinder::GeneratePath(CPathNode* end_node)
 {
-    CPathNode* current_node = NULL;
     std::vector<CPathNode*> final_path;
-
     final_path.clear();
-    current_node = end_node;
 
-    final_path.push_back(current_node);
-
-    while(current_node->GetParentNode() != NULL)
+    while(end_node->GetParentNode() != NULL)
     {
-        final_path.push_back(current_node->GetParentNode());
-        current_node = current_node->GetParentNode();
+        final_path.push_back(end_node);
+        end_node = end_node->GetParentNode();
     }
 
-#if PATH_ENTITY_TO_LARA
-    for(size_t i = final_path.size()-1; i != 0; i--)
+    for(size_t i = final_path.size(); i-- > 0;)
     {
         if(final_path[i]->GetSector() == NULL)
         {
             Sys_DebugLog(SYS_LOG_PATHFINDER, "Error during path gen, GetSector() returned NULL!\n");
             continue;
         }
-        Sys_DebugLog(SYS_LOG_PATHFINDER, "Entity will go to: X: %i Y: %i\n", final_path[i]->GetSector()->index_x, final_path[i]->GetSector()->index_y);
+
+        Sys_DebugLog(SYS_LOG_PATHFINDER, "Entity will go to: X: %i Y: %i Floor: %i\n", final_path[i]->GetSector()->index_x, final_path[i]->GetSector()->index_y, final_path[i]->GetSector()->floor);
     }
-#else
-    for(size_t i = 0; i < final_path.size(); i++)
-    {
-        if(final_path[i]->GetSector() == NULL)
-        {
-            Sys_DebugLog(SYS_LOG_PATHFINDER, "Error during path gen, GetSector() returned NULL!\n");
-            continue;
-        }
-        Sys_DebugLog(SYS_LOG_PATHFINDER, "Entity will go to: X: %i Y: %i\n", final_path[i]->GetSector()->index_x, final_path[i]->GetSector()->index_y);
-    }
-#endif
 
     final_path.clear();
 }
@@ -460,21 +434,24 @@ void CPathFinder::GeneratePath(CPathNode* end_node)
  * Returns 1 if entity can move to this sector
  */
 ///@TODO - This should check sector heights and anything that would block a specific entity type from moving to a sector/node i.e (water, walls, next step too high..)
-
+///@TODO - Ceiling checks, water checks.
 int CPathFinder::IsValidNeighbour(CPathNode* current_node, CPathNode* neighbour_node)
 {
+    int32_t diff;
+
     if(current_node != NULL && neighbour_node != NULL)
     {
-        if(current_node->GetSector()->floor > neighbour_node->GetSector()->floor + 256.0f)///@FIXME const, floor height mis-matches
+        ///There is a floor height mis-match we need to check if this entity is able to step up or down
+        if(current_node->GetSector()->floor != neighbour_node->GetSector()->floor)
         {
-            //Sys_DebugLog(SYS_LOG_PATHFINDER, "[IsValidNeighbour] - current_node : %i - neighbour_node : %i\n", current_node->GetSector()->floor, neighbour_node->GetSector()->floor);
-            //return 0;
-        }
-        else if(current_node->GetSector()->floor < neighbour_node->GetSector()->floor - 256.0f)///@FIXME const, floor height mis-matches
-        {
+            //Height difference
+            diff = current_node->GetSector()->floor - neighbour_node->GetSector()->floor;
 
-            //Sys_DebugLog(SYS_LOG_PATHFINDER, "[IsValidNeighbour2] - current_node : %i - neighbour_node : %i\n", current_node->GetSector()->floor, neighbour_node->GetSector()->floor);
-            //return 0;
+            //If the current node's floor+1step is higher
+            if(diff > 256 || diff < -256)
+            {
+                return 0;
+            }
         }
     }
     else
@@ -485,18 +462,22 @@ int CPathFinder::IsValidNeighbour(CPathNode* current_node, CPathNode* neighbour_
     return 1;
 }
 
+/*
+ * Returns movement cost from node A to node B.
+ */
+
 int CPathFinder::GetMovementCost(CPathNode* from_node, CPathNode* to_node)
 {
-    int cost = 0;
+    int movement_cost = 0;
 
     if(from_node->GetSector()->index_x != to_node->GetSector()->index_x && from_node->GetSector()->index_y != to_node->GetSector()->index_y)
     {
-        cost += 14;
+        movement_cost += 14;
     }
     else
     {
-        cost += 10;
+        movement_cost += 10;
     }
 
-    return cost;
+    return movement_cost;
 }
