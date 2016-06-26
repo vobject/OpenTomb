@@ -9,9 +9,6 @@
 #include "room.h"
 #include "path.h"
 
-///7 = wolf
-///8 = bear
-
 /*
  * Updates specific entity
  */
@@ -43,23 +40,23 @@ void AI_UpdateEntity(entity_p entity)
 
         switch(meshType)
         {
-    case 7:
+    case tr1Enemy::WOLF:
         {
             CPathFinder* pathFinder = NULL;
             pathFinder = new CPathFinder();
             pathFinder->InitialiseSearch(entity->current_sector, targetEntity->current_sector);
             ///@TODO Pass path sector node to AI_Update* That is where we will move the entity
-            AI_UpdateWolf(entity);
+            AI_UpdateWolf(entity, pathFinder);
             delete pathFinder;
         }
         break;
-    case 8:
+    case tr1Enemy::BEAR:
         {
             CPathFinder* pathFinder = NULL;
             pathFinder = new CPathFinder();
             pathFinder->InitialiseSearch(entity->current_sector, targetEntity->current_sector);
             ///@TODO Pass path sector node to AI_Update* That is where we will move the entity
-            AI_UpdateBear(entity);
+            AI_UpdateBear(entity, pathFinder);
             delete pathFinder;
         }
         break;
@@ -71,7 +68,7 @@ void AI_UpdateEntity(entity_p entity)
 }
 
 ///@TODO
-void AI_UpdateWolf(entity_p entity)
+void AI_UpdateWolf(entity_p entity, CPathFinder* path)
 {
     if(entity != NULL)
     {
@@ -80,7 +77,7 @@ void AI_UpdateWolf(entity_p entity)
 }
 
 ///@TODO
-void AI_UpdateBear(entity_p entity)
+void AI_UpdateBear(entity_p entity, CPathFinder* path)
 {
     if(entity != NULL)
     {

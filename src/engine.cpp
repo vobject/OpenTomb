@@ -871,6 +871,7 @@ void ShowDebugInfo()
                     GLText_OutTextXY(30.0f, y += dy, "last_anim = %03d, curr_anim = %03d, next_anim = %03d, last_st = %03d, next_st = %03d", ent->bf->animations.last_animation, ent->bf->animations.current_animation, ent->bf->animations.next_animation, ent->bf->animations.last_state, ent->bf->animations.next_state);
                     GLText_OutTextXY(30.0f, y += dy, "curr_anim = %03d, next_anim = %03d, curr_frame = %03d, next_frame = %03d", ent->bf->animations.current_animation, ent->bf->animations.next_animation, ent->bf->animations.current_frame, ent->bf->animations.next_frame);
                     GLText_OutTextXY(30.0f, y += dy, "posX = %f, posY = %f, posZ = %f", ent->transform[12], ent->transform[13], ent->transform[14]);
+                    GLText_OutTextXY(30.0f, y += dy, "sectX = %i, sectY = %i", ent->current_sector->index_x, ent->current_sector->index_y);
                 }
             }
             break;

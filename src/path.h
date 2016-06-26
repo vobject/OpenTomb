@@ -36,6 +36,7 @@ private:
     int  CalculateHeuristic(CPathNode* start, CPathNode* target);
     void GeneratePath(CPathNode* end_node);
     int  IsValidNeighbour(CPathNode* current_node, CPathNode* neighbour_node);
+    int  GetMovementCost(CPathNode* from_node, CPathNode* to_node);
 };
 
 #endif // PATH_H
