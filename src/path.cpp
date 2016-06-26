@@ -424,7 +424,21 @@ void CPathFinder::GeneratePath(CPathNode* end_node)
             continue;
         }
 
-        Sys_DebugLog(SYS_LOG_PATHFINDER, "Entity will go to: X: %i Y: %i Floor: %i\n", final_path[i]->GetSector()->index_x, final_path[i]->GetSector()->index_y, final_path[i]->GetSector()->floor);
+        //Target will be marked red
+        if(i == 0)
+        {
+            renderer.debugDrawer->SetColor(1.0, 0.0, 0.0);
+        }
+        else if(i == final_path.size()-1)
+        {
+            renderer.debugDrawer->SetColor(0.0, 0.0, 1.0);
+        }
+        else
+        {
+            renderer.debugDrawer->SetColor(0.0, 1.0, 0.0);
+        }
+
+        renderer.debugDrawer->DrawSectorDebugLines(final_path[i]->GetSector());
     }
 
     final_path.clear();
@@ -438,19 +452,39 @@ void CPathFinder::GeneratePath(CPathNode* end_node)
 int CPathFinder::IsValidNeighbour(CPathNode* current_node, CPathNode* neighbour_node)
 {
     int32_t diff;
+    room_sector_p current_sector, neighbour_sector, current_sector_below, neighbour_sector_below;
 
     if(current_node != NULL && neighbour_node != NULL)
     {
-        ///There is a floor height mis-match we need to check if this entity is able to step up or down
-        if(current_node->GetSector()->floor != neighbour_node->GetSector()->floor)
-        {
-            //Height difference
-            diff = current_node->GetSector()->floor - neighbour_node->GetSector()->floor;
+        current_sector = current_node->GetSector();
+        neighbour_sector = neighbour_node->GetSector();
 
-            //If the current node's floor+1step is higher
-            if(diff > 256 || diff < -256)
+        if(current_sector  != NULL && neighbour_sector != NULL)
+        {
+            ///@FIXME find better way of doing this
+            current_sector_below = current_sector->sector_below;
+            neighbour_sector_below = neighbour_sector->sector_below;
+
+            if(current_sector_below != NULL)
             {
-                return 0;
+                if(current_sector_below->owner_room->flags & TR_ROOM_FLAG_WATER) return 0;
+            }
+
+            if(neighbour_sector_below != NULL)
+            {
+                if(neighbour_sector_below->owner_room->flags & TR_ROOM_FLAG_WATER) return 0;
+            }
+
+            if(current_sector->floor != neighbour_sector->floor)
+            {
+            //Height difference
+            diff = current_sector->floor - neighbour_sector->floor;
+
+                //If the current node's floor+1step is higher
+                if(diff > 256 || diff < -256)
+                {
+                    return 0;
+                }
             }
         }
     }

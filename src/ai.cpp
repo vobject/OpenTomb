@@ -45,7 +45,7 @@ void AI_UpdateEntity(entity_p entity)
             CPathFinder* pathFinder = NULL;
             pathFinder = new CPathFinder();
             pathFinder->InitialiseSearch(entity->current_sector, targetEntity->current_sector);
-            AI_UpdateWolf(entity, pathFinder);
+            //AI_UpdateWolf(entity, pathFinder);
             delete pathFinder;
         }
         break;
@@ -54,7 +54,7 @@ void AI_UpdateEntity(entity_p entity)
             CPathFinder* pathFinder = NULL;
             pathFinder = new CPathFinder();
             pathFinder->InitialiseSearch(entity->current_sector, targetEntity->current_sector);
-            AI_UpdateBear(entity, pathFinder);
+            //AI_UpdateBear(entity, pathFinder);
             delete pathFinder;
         }
         break;
