@@ -29,7 +29,7 @@ void Game_ApplyControls(struct entity_s *ent);
 
 void Game_UpdateAllEntities(struct RedBlackNode_s *x);
 void Game_LoopEntities(struct RedBlackNode_s *x);
-void Game_UpdateAI();
+void Game_UpdateAI(struct RedBlackNode_s *x);
 void Game_UpdateCharacters();
 
 void Cam_FollowEntity(struct camera_s *cam, struct entity_s *ent, float dx, float dz);
