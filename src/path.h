@@ -15,15 +15,19 @@ public:
      CPathFinder();
     ~CPathFinder();
 
-    void InitialiseSearch(room_sector_s* start, room_sector_s* target);
+    void InitialiseSearch(room_sector_s* start, room_sector_s* target, uint32_t flags);
     CPathNode* GetNextOpenNode();
 
+    ///@TODO private
+    std::vector<CPathNode*>     m_resultPath;            ///Final result path
 private:
     std::vector<CPathNode>      m_nodes;                 ///List of all nodes
     std::vector<CPathNode*>     m_openList;              ///Nodes which have to be searched
     std::vector<CPathNode*>     m_closedList;            ///Nodes which have been searched and are now closed
+
     struct room_s               *m_startRoom;            ///Starting room of search
     struct room_s               *m_targetRoom;           ///target room to reach
+    uint32_t                     m_flags;
 
     void AddToOpenList(CPathNode* node);
     void AddToClosedList(CPathNode* node);

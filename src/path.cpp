@@ -1,5 +1,6 @@
 #include "core/system.h"
 
+#include "ai.h"
 #include "path.h"
 #include "world.h"
 
@@ -18,8 +19,10 @@ CPathFinder::CPathFinder()
     this->m_nodes.clear();
     this->m_openList.clear();
     this->m_closedList.clear();
+    this->m_resultPath.clear();
     this->m_startRoom = NULL;
     this->m_targetRoom = NULL;
+    this->m_flags = 0;
 }
 
 /*
@@ -31,8 +34,10 @@ CPathFinder::~CPathFinder()
     this->m_nodes.clear();
     this->m_openList.clear();
     this->m_closedList.clear();
+    this->m_resultPath.clear();
     this->m_startRoom = NULL;
     this->m_targetRoom = NULL;
+    this->m_flags = 0;
 }
 
 /*
@@ -40,7 +45,7 @@ CPathFinder::~CPathFinder()
  */
 ///@TODO Search multiple rooms.
 
-void CPathFinder::InitialiseSearch(room_sector_s* start, room_sector_s* target)
+void CPathFinder::InitialiseSearch(room_sector_s* start, room_sector_s* target, uint32_t flags)
 {
     CPathNode* start_node = NULL;
     CPathNode* target_node = NULL;
@@ -50,6 +55,13 @@ void CPathFinder::InitialiseSearch(room_sector_s* start, room_sector_s* target)
     //The sector's start and target sector's room must not be null
     if(start->owner_room == NULL || target->owner_room == NULL)
     {
+        return;
+    }
+
+    if(start->owner_room != target->owner_room)
+    {
+        ///@TODO
+        ///1. check near by rooms, if target room is in the list. Get list of rooms to go trough to reach Lara.
         return;
     }
 
@@ -72,6 +84,9 @@ void CPathFinder::InitialiseSearch(room_sector_s* start, room_sector_s* target)
             initial_node->SetSector(World_GetRoomSector(start->owner_room->id, x, y));
         }
     }
+
+    //Set flags so that we can customise the algorithm based on ai types
+    this->m_flags ^= flags;
 
     //Get our start node and target node
     start_node = &this->m_nodes[start->index_x + (start->owner_room->sectors_x * start->index_y)];
@@ -365,6 +380,7 @@ CPathNode* CPathFinder::GetNodeFromXY(uint16_t x, uint16_t y)
     {
         Sys_DebugLog(SYS_LOG_FILENAME, "[CPathFinder::GetNodeFromXY] - (Warning) - Start room is NULL!\n");
     }
+
     return NULL;
 }
 
@@ -407,18 +423,17 @@ int CPathFinder::CalculateHeuristic(CPathNode* start, CPathNode* target)
 
 void CPathFinder::GeneratePath(CPathNode* end_node)
 {
-    std::vector<CPathNode*> final_path;
-    final_path.clear();
+    this->m_resultPath.clear();
 
     while(end_node->GetParentNode() != NULL)
     {
-        final_path.push_back(end_node);
+        this->m_resultPath.push_back(end_node);
         end_node = end_node->GetParentNode();
     }
 
-    for(size_t i = final_path.size(); i-- > 0;)
+    for(size_t i = this->m_resultPath.size(); i-- > 0;)
     {
-        if(final_path[i]->GetSector() == NULL)
+        if(this->m_resultPath[i]->GetSector() == NULL)
         {
             Sys_DebugLog(SYS_LOG_PATHFINDER, "Error during path gen, GetSector() returned NULL!\n");
             continue;
@@ -429,7 +444,7 @@ void CPathFinder::GeneratePath(CPathNode* end_node)
         {
             renderer.debugDrawer->SetColor(1.0, 0.0, 0.0);
         }
-        else if(i == final_path.size()-1)
+        else if(i == this->m_resultPath.size()-1)
         {
             renderer.debugDrawer->SetColor(0.0, 0.0, 1.0);
         }
@@ -438,10 +453,8 @@ void CPathFinder::GeneratePath(CPathNode* end_node)
             renderer.debugDrawer->SetColor(0.0, 1.0, 0.0);
         }
 
-        renderer.debugDrawer->DrawSectorDebugLines(final_path[i]->GetSector());
+        renderer.debugDrawer->DrawSectorDebugLines(this->m_resultPath[i]->GetSector());
     }
-
-    final_path.clear();
 }
 
 /*
@@ -459,7 +472,7 @@ int CPathFinder::IsValidNeighbour(CPathNode* current_node, CPathNode* neighbour_
         current_sector = current_node->GetSector();
         neighbour_sector = neighbour_node->GetSector();
 
-        if(current_sector  != NULL && neighbour_sector != NULL)
+        if(current_sector  != NULL && neighbour_sector != NULL && !(this->m_flags & AIType::WATER))
         {
             ///@FIXME find better way of doing this
             current_sector_below = current_sector->sector_below;

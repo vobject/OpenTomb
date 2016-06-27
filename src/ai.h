@@ -5,8 +5,13 @@
 #include "path.h"
 
 void AI_UpdateEntity(entity_p entity);
-void AI_UpdateWolf(entity_p entity, CPathFinder* path);
-void AI_UpdateBear(entity_p entity, CPathFinder* path);
+void AI_UpdateWolf(entity_p entity);
+void AI_UpdateBear(entity_p entity);
+void AI_UpdateBat(entity_p entity);
+void AI_UpdateCroc(entity_p entity);
+void AI_UpdateCroc2(entity_p entity);
+void AI_UpdateLion(entity_p entity);
+void AI_MoveEntity(entity_p entity, entity_p target_entity, CPathFinder* path, uint32_t flags);
 
 enum tr1Enemy
 {
@@ -18,6 +23,19 @@ enum tr1Enemy
     UNUSED_05,
     UNUSED_06,
     WOLF,
-    BEAR
+    BEAR,
+    BAT,
+    CROC,//LAND
+    CROC2,//SWIM
+    LION_M,
+    LION_F
 };
+
+enum AIType
+{
+    GROUND = (1 << 1),
+    WATER  = (1 << 2),
+    FLYING = (1 << 3)
+};
+
 #endif // AI_H
