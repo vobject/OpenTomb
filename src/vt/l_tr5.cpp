@@ -29,27 +29,28 @@
 void TR_Level::read_tr5_room_light(SDL_RWops * const src, tr5_room_light_t & light)
 {
     uint32_t temp;
-
     read_tr4_vertex_float(src, light.pos);
-    //read_tr_colour(src, light.color);
-    light.color.r = read_float(src) * 255.0;    // r
-    light.color.g = read_float(src) * 255.0;    // g
-    light.color.b = read_float(src) * 255.0;    // b
-    light.color.a = read_float(src) * 255.0;    // a
+    light.color.r = (read_float(src) * 255.0f);    // r
+    light.color.g = (read_float(src) * 255.0f);    // g
+    light.color.b = (read_float(src) * 255.0f);    // b
+    read_float(src);//This is most likely dummy data, there is no alpha component.
     light.color.a = 1.0f;
-/*
-    if ((temp != 0) && (temp != 0xCDCDCDCD))
-        throw TR_ReadError("read_tr5_room_light: seperator1 has wrong value");
-*/
+
     light.r_inner = read_float(src);
     light.r_outer = read_float(src);
-    read_float(src);    // rad_input
-    read_float(src);    // rad_output
-    read_float(src);    // range
+    light.length = read_bitu16(src);
+    light.cutoff = read_bitu16(src);
+    read_bitu16(src);
+    read_bitu16(src);
+    read_bitu16(src);
+    read_bitu16(src);
+
     read_tr4_vertex_float(src, light.dir);
     read_tr_vertex32(src, light.pos2);
     read_tr_vertex32(src, light.dir2);
     light.light_type = read_bitu8(src);
+
+
     temp = read_bitu8(src);
     if (temp != 0xCD)
         Sys_extWarn("read_tr5_room_light: seperator2 has wrong value");
