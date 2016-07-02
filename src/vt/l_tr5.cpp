@@ -50,6 +50,7 @@ void TR_Level::read_tr5_room_light(SDL_RWops * const src, tr5_room_light_t & lig
     read_tr_vertex32(src, light.dir2);
     light.light_type = read_bitu8(src);
 
+    light.intensity = 1.0f;//Real intensity value must be located!
 
     temp = read_bitu8(src);
     if (temp != 0xCD)
